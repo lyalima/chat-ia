@@ -1,0 +1,42 @@
+/* login.css */
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+}
+
+.container {
+    background-color: #f7f7f7;
+}
+
+.card {
+    border-radius: 10px;
+}
+
+h3 {
+    color: #333;
+}
+
+.btn-primary {
+    background-color: #4c6ef5;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #3b5bdb;
+}
+
+a {
+    color: #4c6ef5;
+}
+
+a:hover {
+    color: #3b5bdb;
+}
+
+@media (max-width: 576px) {
+    .card {
+        padding: 20px;
+    }
+}
