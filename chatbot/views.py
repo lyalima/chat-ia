@@ -1,91 +1,74 @@
 import os
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import View
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from langchain_groq import ChatGroq
-from markdown import markdown
-from .models import ChatBot
+from .models import Chat, Conversation
+from utils.ia import ChatIA
 
 
-os.environ['GROQ_API_KEY'] = settings.GROQ_API_KEY
+class ConversationListView(LoginRequiredMixin, View):
 
-def home(request):
-    return render(request, 'home.html')
+    def get(self, request):
+        conversations = request.user.conversations.all().order_by('-created_at')
 
-
-def get_chat_history(chats):
-    chat_history = []
-    
-    for chat in chats:
-        chat_history.append(
-            ('human', chat.message,)
+        return render(
+            request, 
+            'chatbot/conversations.html',
+            {'conversations': conversations}
         )
-        chat_history.append(
-            ('ai', chat.response,)
-        )
-    return chat_history
 
 
-def generate_message_title(message):
-    model = ChatGroq(model='llama-3.2-90b-vision-preview')
-    messages = [
-        (
-            'system', 
-            'Você é um gerador de títulos de conversas.'
-            'Para cada mensagem que você receber, gere um título baseado no conteúdo da mensagem.',
-        ),
-    ]
-    messages.append(
-        (
-            'human',
-            message,
-        )
-    )
-    response = model.invoke(messages)
+class NewConversationView(LoginRequiredMixin, View):
 
-    return response.content
-
-
-def ask_ai(context, message):
-    model = ChatGroq(model='llama-3.2-90b-vision-preview')
-    messages = [
-        (
-            'system',
-            'Você é um assistente responsável por tirar dúvidas sobre programação Python.'
-            'Responda em formato markdown.',
-        ),
-    ]
-    messages.extend(context)
-    messages.append(
-        (
-            'human',
-            message,
-        ),
-    )
-    response = model.invoke(messages)
-
-    return markdown(response.content, output_format='html')
-
-
-@login_required
-def chatbot(request):
-    chats = ChatBot.objects.filter(user=request.user)
-
-    if request.method == 'POST':
-        context = get_chat_history(chats=chats)
-        message = request.POST.get('message')
-        message_title = generate_message_title(message=message)
-        response = ask_ai(context=context, message=message)
-
-        chat = ChatBot(
+    def post(self, request):
+        conversation = Conversation.objects.create(
             user=request.user,
-            message=message,
-            message_title=message_title,
+            title=''
+        )
+
+        return redirect('chatbot-view', conversation_id=conversation.id)
+
+
+class ChatBotView(LoginRequiredMixin, View):
+
+    def __init__(self):
+        self.chat_ia = ChatIA()
+
+
+    def get(self, request, conversation_id, *args, **kwargs):
+        conversations = Conversation.objects.filter(user=request.user).order_by('-created_at')
+        conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user)
+        chats = conversation.chats.all()
+
+        return render(
+            request, 
+            'chatbot/chatbot.html', 
+            {
+             'chats': chats,
+             'conversation': conversation,
+             'conversation_selected': conversation_id,
+             'conversations': conversations
+            }
+        )
+    
+
+    def post(self, request, conversation_id, *args, **kwargs):
+        conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user)
+        message = request.POST.get('message')
+        chats = conversation.chats.all()
+        context = self.chat_ia.get_chat_history(chats=chats)
+        response = self.chat_ia.ask_ai(context=context, message=message)
+
+        chat = Chat(
+            conversation=conversation,
+            question=message,
             response=response,
         )
         chat.save()
 
+        if not conversation.title:
+            conversation.title = self.chat_ia.generate_conversation_title(msg=message)
+            conversation.save()
+
         return JsonResponse({'message': message, 'response': response})
-    
-    return render(request, 'chatbot.html', {'chats': chats})

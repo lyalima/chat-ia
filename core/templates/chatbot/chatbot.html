@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <style>
+      i {
+        font-size: 2em;
+      }
+    </style>
+    <link href="{% static 'fontawesome/css/all.css' %}" rel="stylesheet">
+    <a title="Voltar" href={% url 'conversations-list-view' %}><i class="fa fa-arrow-circle-left mx-5 my-3" aria-hidden="true"></i></a>
+    <div id="content" class="flex-grow-1">
+        <div class="card-header text-black">
+          <h1>Olá, {{ user.username }}</h1>
+          <h1>Como posso ajudar?</h1>
+          <hr>
+        </div>
+        <div class="card-body messages-box">
+            <ul class="list-unstyled messages-list">
+              {% for chat in chats %}
+                <li class="message sent">
+                  <div class="message-text">
+                    <div class="message-sender">
+                      <b>Você</b>
+                    </div>
+                    <div class="message-content">
+                      {{chat.question}}
+                    </div>
+                  </div>
+                </li>
+                <li class="message received">
+                  <div class="message-text">
+                    <div class="message-sender">
+                      <b>Chat IA</b>
+                    </div>
+                    <div class="markdown-content">
+                      {{chat.response|safe}}
+                    </div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+        </div>
+        <form class="message-form" method="post" action="">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" class="form-control message-input" placeholder="No que posso ajudar?">
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-primary">Enviar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}

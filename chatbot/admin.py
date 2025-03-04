@@ -1,10 +1,16 @@
 from django.contrib import admin
-from .models import ChatBot
+from .models import Conversation, Chat
 
 
-class ChatBotAdmin(admin.ModelAdmin):
-    model = ChatBot
+class ChatAdmin(admin.ModelAdmin):
+    model = Chat
     list_display = ['message', 'response', 'created_at']
 
 
-admin.site.register(ChatBot)
+class ConversationAdmin(admin.ModelAdmin):
+    model = Conversation
+    list_display = ['user', 'title', 'created_at']
+
+
+admin.site.register(Chat)
+admin.site.register(Conversation)

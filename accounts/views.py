@@ -6,6 +6,12 @@ from django.urls import reverse_lazy
 from django.views.generic import View, CreateView
 
 
+class HomeView(View):
+
+    def get(self, request):
+        return render(request, 'home/home.html')
+    
+
 class RegisterView(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login-view')
@@ -27,7 +33,7 @@ class LoginView(View):
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             login(request, form.get_user())
-            return redirect(reverse_lazy('chatbot'))
+            return redirect(reverse_lazy('conversations-list-view'))
         return render(request, 'registration/login.html', {'form': form})
 
 

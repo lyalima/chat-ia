@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .conversation-card {
+        background-color: #fff;
+        padding: 15px;
+        margin: 10px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .conversation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        background-color: #f8f9fa;
+    }
+
+    .conversation-title {
+        color:rgba(7, 0, 1, 0.91);
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .conversation-date {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="my-3 text-center">
+    <form action="{% url 'new-conversation-view' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary btn-lg px-4 me-sm-3">
+            Novo chat
+        </button>
+    </form>
+</div>
+
+<h1 class="text-center my-4"><strong>{{ user.username }}</strong> | Suas conversas</h1>
+
+<div class="container">
+    <div class="row">
+        {% if conversations %}
+            {% for conversation in conversations %}
+                <div class="col-md-4 d-flex">
+                    <a href="{% url 'chatbot-view' conversation.id %}" class="conversation-card flex-grow-1">
+                        <div class="conversation-title">
+                            {{ conversation.title|safe }}
+                        </div>
+                        <div class="conversation-date">
+                            {{ conversation.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-muted">Nenhuma conversa encontrada. Inicie um novo chat.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
